@@ -5,13 +5,15 @@ import time
 root=Tk()
 fr=Frame(root)
 root.geometry('800x600')
-canv=Canvas(root,bg='white')
+canv=Canvas(root,bg='black')
 canv.pack(fill=BOTH,expand=1)
 
 #Объект, которым мы управляем, ракета
 class rocket():
 	def __init__(self, x = 500, y = 500):
 		self.x = x
+		self.x0 = 0
+		self.y0 = 0
 		self.y = y
 		self.r = 10
 		self.vx = 0.5
@@ -24,17 +26,21 @@ class rocket():
 		self.id = canv.create_oval(self.x - self.r, self.y - self.r, self.x + self.r, self.y + self.r, fill='red')
 	def set_coords(self):
 		canv.coords(self.id, self.x - self.r, self.y - self.r, self.x + self.r, self.y + self.r)
-	def forced(self, event): #ускорение ракеты
+	def positioning(self, event):
+		self.x0 = event.x #наведение ускорения
+		self.y0 = event.y #наведение ускорения
+	def forced(self): #ускорение ракеты
 		global force
 		if self.power:
-			x0 = event.x - self.x #наведение ускорения
-			y0 = event.y - self.y #наведение ускорения
+			x0 = self.x0 - self.x #наведение ускорения
+			y0 = self.y0 - self.y #наведение ускорения
 			self.ax = x0 / ((x0 ** 2 + y0 ** 2)) ** (1/2) / (self.fuel + 0.2) + force[0]
 			self.ay = y0 / ((x0 ** 2 + y0 ** 2)) ** (1/2) / (self.fuel + 0.2) + force[1]
 		else:
 			self.ax = force[0]
 			self.ay = force[1]
 	def move(self):
+		self.forced()
 		self.x += (self.vx + self.ax / 2) #Перемещение
 		self.y += (self.vy + self.ay / 2) #Перемещение
 		self.vx += self.ax
@@ -60,8 +66,8 @@ class field(): #недописано
 		self.id = canv.create_oval(self.x - self.r, self.y - self.r, self.x + self.r, self.y + self.r, fill='red')
 	def force(self, x, y):
 		global force
-		force[0] = I * x / (x ** 2 + y ** 2) ** (3 / 2)
-		force[1] = I * y / (x ** 2 + y ** 2) ** (3 / 2)
+		force[0] += I * x / (x ** 2 + y ** 2) ** (3 / 2)
+		force[1] += I * y / (x ** 2 + y ** 2) ** (3 / 2)
 		return force
 
 def new_game(event = ''):
@@ -71,7 +77,7 @@ def new_game(event = ''):
 	canv.bind('<Button-1>', r1.power_start) #тяга при нажатии
 	r1.move()
 	canv.bind('<ButtonRelease-1>', r1.power_end) #нет тяги при отпускании
-	canv.bind('<Motion>', r1.forced) #наведение мышкой
+	canv.bind('<Motion>', r1.positioning) #наведение мышкой
 	#root.after(10,new_game)
 
 
